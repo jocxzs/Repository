@@ -29,7 +29,7 @@ Instale as dependências
 Inicie o servidor
 
 ```bash
-  npx run start
+  npm run start
 ```
 Leia o QR Code gerado no terminal pelo aplicativo EXPO GO,
 Ou utilize o Web bundler para vizualização web (Podem haver diferenças na forma como o aplicativo será mostrado na web e no mobile, ou diferença entre navegadores)
