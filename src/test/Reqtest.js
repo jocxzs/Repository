@@ -19,14 +19,6 @@ async function fecthById(id) {
 
 // Exemplo de uso:
 // fecthById(1);
-// Exemplo de uso:
-// fecthById(1);
-
-// for(i = 1; i<42; i++){
-//     const ListData = [
-//         fecthById(i)
-//     ]
-// }
 
 const ListData = []
 
