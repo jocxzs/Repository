@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image } from 'react-native-web';
 
 const baseurl = "https://rickandmortyapi.com/api/character/"; 
 var page = 1;
+
+// Exemplo de uso:
+// fecthById(1);
+
+// for(i = 1; i<42; i++){
+//     const ListData = [
+//         fecthById(i)
+//     ]
+// }
 
 const CharacterList = ({ navigation }) => {
 
@@ -14,12 +22,12 @@ const CharacterList = ({ navigation }) => {
     try {
       setIsLoading(true);
       const pagesufix = "?page=";
-      const finalurl = baseurl + pagesufix + page;//https://rickandmortyapi.com/api/character/?page=1
+      const finalurl = baseurl + pagesufix + page;
       for (page = 1; page <= 42; page++) {
         const response = await fetch(finalurl);
         const json = await response.json();
         setCharacters(json.results); 
-        //console.log(json.results);
+        console.log(json.results);
     }
     } catch (error) {
       console.error("Error fetching characters:", error);
@@ -68,15 +76,14 @@ const CharacterList = ({ navigation }) => {
   }, []);
 
     const renderItem = ({ item }) => (
-      <><TouchableOpacity
-          style={[styles.flexItem, styles.center]}
-        onPress={() => {
-        } }
-      >
-        <Image source={item.image} style={styles.image}/>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.status}>Status: {item.status} - {item.species}</Text>
-      </TouchableOpacity></>
+    <TouchableOpacity 
+    style={styles.flexItem}
+      onPress={() => { //navigation.navigate('CharacterDetail', { characterId: item.id });
+      }}
+    >
+      <Text style={styles.name}>{item.name}</Text>
+      <Text style={styles.status}>Status: {item.status} - {item.species}</Text>
+    </TouchableOpacity>
     );
   
 
@@ -91,7 +98,7 @@ const CharacterList = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-          <Text style={styles.Text}>Character List</Text>
+          <Text style={styles.Text}>Lista de Personagens</Text>
           <FlatList
             data={characters}
             renderItem={renderItem} 
@@ -157,7 +164,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9f9f9",
   },
   name: {
-    paddingTop: 10,
     fontSize: 18,
     fontWeight: "bold",
     color: "#eeeeeeff",
@@ -182,11 +188,6 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: "#999999ff",
-  },
-  image: { 
-    height: 200,
-    width: "40%",
-    borderRadius:10
   }
 });
 
