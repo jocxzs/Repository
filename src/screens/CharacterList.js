@@ -1,193 +1,169 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image } from 'react-native-web';
+import { Image } from 'react-native-web'; 
 
 const baseurl = "https://rickandmortyapi.com/api/character/"; 
-var page = 1;
 
 const CharacterList = ({ navigation }) => {
 
     const [characters, setCharacters] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [nextUrl, setNextUrl] = useState(baseurl); 
+    const [isFetchingMore, setIsFetchingMore] = useState(false); 
 
-    async function fetchCharacters(page) {
-    try {
-      setIsLoading(true);
-      const pagesufix = "?page=";
-      const finalurl = baseurl + pagesufix + page;//https://rickandmortyapi.com/api/character/?page=1
-      for (page = 1; page <= 42; page++) {
-        const response = await fetch(finalurl);
-        const json = await response.json();
-        setCharacters(json.results); 
-        //console.log(json.results);
-    }
-    } catch (error) {
-      console.error("Error fetching characters:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    async function fetchCharacters() {
+        if (!nextUrl) return; 
 
-  async function fecthById(id) {
-  try {
-    setIsLoading(true);
-    const finalurl = baseurl + id;
-    const response = await fetch(finalurl);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
+        if (characters.length === 0) {
+            setIsLoading(true);
+        } else {
+            setIsFetchingMore(true);
+        }
 
-    console.log(data);
-    return data;
-  } catch (error) {
-    console.error("Couldn't fetch data", error);
-  }
-    finally { setIsLoading(false); }
-}
-  const setPage = (newPage) => {
-    page = newPage;
-    fetchCharacters(page);
-  }
-  const handleNextPageButtonPress = () => {
-    if (page <= 42) {
-      setPage(page + 1);
-    }
-    return;
-  };
+        try {
+            const response = await fetch(nextUrl);
+            const json = await response.json();
 
-  const handlePreviousPageButtonPress = () => {
-    if (page >= 2) {
-      setPage(page -1);
-    }
-    return;
-  };
+            setCharacters(prevCharacters => [...prevCharacters, ...json.results]);
+            
+            setNextUrl(json.info.next); 
 
-  useEffect(() => {
-    fetchCharacters(1);
-  }, []);
+        } catch (error) {
+            console.error("Error fetching characters:", error);
+        } finally {
+            setIsLoading(false);
+            setIsFetchingMore(false);
+        }
+    }
+
+    useEffect(() => {
+        fetchCharacters();
+    }, []);
+
+    const handleLoadMore = () => {
+        if (!isFetchingMore && nextUrl) {
+            fetchCharacters();
+        }
+    };
+
+    const renderFooter = () => {
+        if (!isFetchingMore) return null; 
+        
+        return (
+            <View style={styles.footerContainer}>
+                <ActivityIndicator size="large" color="#15ff00ff" />
+                <Text style={styles.loadingText}>Carregando mais...</Text>
+            </View>
+        );
+    };
 
     const renderItem = ({ item }) => (
-      <><TouchableOpacity
-          style={[styles.flexItem, styles.center]}
-        onPress={() => {
-        } }
-      >
-        <Image source={item.image} style={styles.image}/>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.status}>Status: {item.status} - {item.species}</Text>
-      </TouchableOpacity></>
+        <TouchableOpacity
+            style={[styles.flexItem, styles.center]}
+            onPress={() => {
+                navigation.navigate('CharacterDetails', { character: item });
+            }}
+        >
+            <Image source={{ uri: item.image }} style={styles.image}/> 
+            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.status}>Status: {item.status} - {item.species}</Text>
+        </TouchableOpacity>
     );
-  
 
-        if (isLoading) {
+    if (isLoading) {
         return (
-        <View style={styles.center}>
-            <ActivityIndicator size="large" color="#15ff00ff" />
-            <Text>Loading data...</Text>
-        </View>
+            <View style={styles.center}>
+                <ActivityIndicator size="large" color="#15ff00ff" />
+                <Text style={styles.loadingText}>Carregando dados...</Text>
+            </View>
         );
     }
-
+    
     return (
         <View style={styles.container}>
-          <Text style={styles.Text}>Character List</Text>
-          <FlatList
-            data={characters}
-            renderItem={renderItem} 
-            keyExtractor={(item) => item.id.toString()} 
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-          />
-          <View style={styles.pageContainer}>
-            <TouchableOpacity style={[styles.buttonContainer, page === 1 && styles.disabledButton]} 
-              onPress={() => handlePreviousPageButtonPress()}
-              disabled={page == 1}>
-              <Text style={styles.buttonText}>Previous Page</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.buttonContainer, page === 42 && styles.disabledButton]} 
-              onPress={() => handleNextPageButtonPress()}
-              disabled={page == 42}>
-              <Text style={styles.buttonText}>Next Page</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.center}>
-            <TouchableOpacity style={styles.buttonContainer} onPress={() => navigation.goBack()}>
-              <Text style={styles.buttonText}>Go back</Text>
-            </TouchableOpacity>
-          </View>  
+            <Text style={styles.Text}>Character List</Text>
+            <FlatList
+                data={characters}
+                renderItem={renderItem} 
+                keyExtractor={(item) => item.id.toString()} 
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                onEndReached={handleLoadMore} 
+                onEndReachedThreshold={0.5} 
+                ListFooterComponent={renderFooter} 
+            />
+             <View style={styles.center}>
+                <TouchableOpacity style={styles.buttonContainer} onPress={() => navigation.goBack()}>
+                    <Text style={styles.buttonText}>Voltar</Text>
+                </TouchableOpacity>
+            </View> 
         </View>
-      );
+    );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "#000000ff",
-  },
-  Text: {
-    color: "#e6e6e6ff",
-    fontSize: 24,
-    margin: 20,
-  },
-  buttonContainer: {
-    height: 50,
-    width: 150,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 10,
-    backgroundColor: "#6bda61ff",
-    borderRadius: 20,
-    margin: 10,
-  },
-  pageButtonContainer: {
-    height: 50,
-    width: 120,
-  },
-  buttonText: {
-    color: "#ffffffff",
-    fontSize: 18,
-  },
-  center: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  itemContainer: {
-    padding: 15,
-    backgroundColor: "#f9f9f9",
-  },
-  name: {
-    paddingTop: 10,
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#eeeeeeff",
-  },
-  status: {
-    fontSize: 14,
-    color: "#eeeeeeff",
-  },
-  separator: {
-    height: 1,
-    backgroundColor: "#dddddd",
-  },
-  flexItem: {
-    padding: 15,
-    backgroundColor: "#252525ff",
-  },
-  pageContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginHorizontal: 20,
-    marginVertical: 15,
-  },
-  disabledButton: {
-    backgroundColor: "#999999ff",
-  },
-  image: { 
-    height: 200,
-    width: "40%",
-    borderRadius:10
-  }
+    container: {
+        flex: 1,
+        justifyContent: "center",
+        backgroundColor: "#000000ff",
+    },
+    Text: {
+        color: "#e6e6e6ff",
+        fontSize: 24,
+        margin: 20,
+    },
+    buttonContainer: {
+        height: 50,
+        width: 150,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 10,
+        backgroundColor: "#6bda61ff",
+        borderRadius: 20,
+        margin: 10,
+    },
+    buttonText: {
+        color: "#ffffffff",
+        fontSize: 18,
+    },
+    center: {
+        flex: 1, 
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    loadingText: {
+        color: "#e6e6e6ff",
+        marginTop: 10,
+    },
+    name: {
+        paddingTop: 10,
+        fontSize: 18,
+        fontWeight: "bold",
+        color: "#eeeeeeff",
+    },
+    status: {
+        fontSize: 14,
+        color: "#eeeeeeff",
+    },
+    separator: {
+        height: 1,
+        backgroundColor: "#dddddd",
+    },
+    flexItem: {
+        padding: 15,
+        backgroundColor: "#252525ff",
+    },
+    image: { 
+        height: 200,
+        width: "40%",
+        borderRadius:10
+    },
+    footerContainer: { 
+        paddingVertical: 20,
+        borderTopWidth: 1,
+        borderColor: "#CED0CE",
+        backgroundColor: "#252525ff",
+        alignItems: 'center',
+    }
 });
 
 export default CharacterList;
