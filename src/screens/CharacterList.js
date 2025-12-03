@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image } from 'react-native-web'; 
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Image } from 'react-native';
 
 const baseurl = "https://rickandmortyapi.com/api/character/"; 
 
@@ -46,8 +45,8 @@ const CharacterList = ({ navigation }) => {
         }
     };
 
-    const renderFooter = () => {
-        if (!isFetchingMore) return null; 
+    const renderListLoadingFooter = () => {
+        if (!isFetchingMore || !nextUrl) return null; 
         
         return (
             <View style={styles.footerContainer}>
@@ -59,7 +58,7 @@ const CharacterList = ({ navigation }) => {
 
     const renderItem = ({ item }) => (
         <TouchableOpacity
-            style={[styles.flexItem, styles.center]}
+            style={[styles.flexItem, styles.itemCenter]}
             onPress={() => {
                 navigation.navigate('CharacterDetails', { character: item });
             }}
@@ -72,7 +71,7 @@ const CharacterList = ({ navigation }) => {
 
     if (isLoading) {
         return (
-            <View style={styles.center}>
+            <View style={styles.fullCenter}>
                 <ActivityIndicator size="large" color="#15ff00ff" />
                 <Text style={styles.loadingText}>Carregando dados...</Text>
             </View>
@@ -89,9 +88,10 @@ const CharacterList = ({ navigation }) => {
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
                 onEndReached={handleLoadMore} 
                 onEndReachedThreshold={0.5} 
-                ListFooterComponent={renderFooter} 
+                ListFooterComponent={renderListLoadingFooter} 
             />
-             <View style={styles.center}>
+            
+            <View style={styles.bottomBar}>
                 <TouchableOpacity style={styles.buttonContainer} onPress={() => navigation.goBack()}>
                     <Text style={styles.buttonText}>Voltar</Text>
                 </TouchableOpacity>
@@ -103,7 +103,6 @@ const CharacterList = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: "center",
         backgroundColor: "#000000ff",
     },
     Text: {
@@ -119,16 +118,20 @@ const styles = StyleSheet.create({
         padding: 10,
         backgroundColor: "#6bda61ff",
         borderRadius: 20,
-        margin: 10,
+        marginVertical: 5,
     },
     buttonText: {
         color: "#ffffffff",
         fontSize: 18,
     },
-    center: {
-        flex: 1, 
+    itemCenter: { 
+        alignItems: "center",
+    },
+    fullCenter: {
+        flex: 1,
         justifyContent: "center",
         alignItems: "center",
+        backgroundColor: "#000000ff",
     },
     loadingText: {
         color: "#e6e6e6ff",
@@ -163,6 +166,13 @@ const styles = StyleSheet.create({
         borderColor: "#CED0CE",
         backgroundColor: "#252525ff",
         alignItems: 'center',
+    },
+    bottomBar: {
+        alignItems: 'center',
+        padding: 5,
+        borderTopWidth: 1,
+        borderTopColor: '#333333',
+        backgroundColor: "#000000ff", 
     }
 });
 
